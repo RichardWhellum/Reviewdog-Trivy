@@ -49,14 +49,14 @@ jobs:
         
       - name: Print Changed Files
         run: |
-            git "Changed files:"
+            echo "Changed files:"
             cat changed-files.txt
 
       - name: Run Trivy on Changed Files
         if: success()
         run: |
             mkdir trivy-results
-            while read -r file: do
+            while read -r file; do
                 echo "Scanning $file..."
                 trivy fs --quiet --severity HIGH,CRITICAL --format json --output trivy-results/$(basename $file).json "$file" || true
             done < changed-files.txt
