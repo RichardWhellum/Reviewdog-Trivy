@@ -9,6 +9,10 @@ jobs:
   trivy-repo-scan:
     name: Trivy Repo Scan & Upload to Security Tab
     runs-on: ubuntu-20.04
+    permissions:
+        contents: write
+        security-events: write
+
 
     steps:
       - name: Checkout code
