@@ -1,0 +1,52 @@
+name: build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  trivy-repo-scan:
+    name: Trivy Repo Scan & Upload to Security Tab
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  reviewdog-pr-check:
+    name: Trivy PR Check
+    runs-on: ubuntu-latest
+    needs: trivy-repo-scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy with Reviewdog and output to PR
+        uses: reviewdog/action-trivy@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          trivy_command: fs
+          trivy_target: . #???
+          level: warning
+          reporter: github-check
+          filter_mode: file
+          fail_on_error: false
+          trivy_flags: "--severity LOW,MEDIUM,HIGH,CRITICAL --exit-code 0"
+        env:
+          REVIEWDOG_DEBUG: "true"
